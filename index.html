@@ -1,0 +1,282 @@
+// Full-stack HiTech Educational College Website
+// Project structure and files included below. Copy each file into the appropriate path.
+
+/*
+README.md
+*/
+
+# HiTech-Edu-Website
+
+A simple full-stack educational college website (HiTech) built with:
+- Frontend: React + Tailwind CSS (single-file demo components)
+- Backend: Node.js + Express + MongoDB (Mongoose)
+- Authentication: JWT (signup/login)
+
+## Quick start
+1. Install MongoDB (or use Atlas) and get a connection string.
+2. Backend: `cd backend` -> `npm install` -> create `.env` from `.env.example` -> `npm run dev`
+3. Frontend: `cd frontend` -> `npm install` -> `npm run dev`
+
+
+// File: frontend/package.json
+{
+  "name": "hitech-edu-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.5.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "vite": "^5.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+
+// File: frontend/index.html
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HiTech Educational College</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+// File: frontend/src/main.jsx
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import App from './App'
+import './index.css'
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/*" element={<App/>} />
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>
+)
+
+// File: frontend/src/index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+// File: frontend/tailwind.config.cjs
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: { extend: {} },
+  plugins: [],
+}
+
+// File: frontend/src/App.jsx
+import React from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
+import Home from './pages/Home'
+import Courses from './pages/Courses'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+
+export default function App(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-800">
+      <header className="bg-white shadow">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="text-2xl font-bold">HiTech College</Link>
+          <nav className="space-x-4">
+            <Link to="/courses">Courses</Link>
+            <Link to="/about">About</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/login" className="ml-4 px-3 py-1 border rounded">Login</Link>
+          </nav>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto p-6">
+        <Routes>
+          <Route path="/" element={<Home/>} />
+          <Route path="/courses" element={<Courses/>} />
+          <Route path="/about" element={<About/>} />
+          <Route path="/contact" element={<Contact/>} />
+          <Route path="/login" element={<Login/>} />
+          <Route path="/dashboard" element={<Dashboard/>} />
+        </Routes>
+      </main>
+      <footer className="bg-white border-t mt-12">
+        <div className="max-w-6xl mx-auto p-6 text-sm text-gray-600">© {new Date().getFullYear()} HiTech Educational College — Built with ❤️</div>
+      </footer>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/Home.jsx
+import React from 'react'
+import { Link } from 'react-router-dom'
+export default function Home(){
+  return (
+    <section>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold">Welcome to HiTech Educational College</h1>
+          <p className="mt-4 text-lg">Leading innovation in technical education — labs, research, and real-world projects.</p>
+          <div className="mt-6">
+            <Link to="/courses" className="px-5 py-3 bg-indigo-600 text-white rounded">Explore Courses</Link>
+          </div>
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/700x420?text=HiTech+Campus" alt="campus" className="rounded shadow" />
+        </div>
+      </div>
+
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Feature title="Modern Labs" desc="State-of-the-art labs for AI, IoT, Robotics." />
+        <Feature title="Experienced Faculty" desc="Industry-experienced professors and mentors." />
+        <Feature title="Placement Support" desc="Dedicated placement cell with top recruiters." />
+      </div>
+    </section>
+  )
+}
+
+function Feature({title, desc}){
+  return (
+    <div className="p-6 bg-white rounded shadow">
+      <h3 className="font-semibold text-lg">{title}</h3>
+      <p className="mt-2 text-sm text-gray-600">{desc}</p>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/Courses.jsx
+import React, {useEffect, useState} from 'react'
+import axios from 'axios'
+
+export default function Courses(){
+  const [courses, setCourses] = useState([])
+  useEffect(()=>{
+    axios.get('http://localhost:5000/api/courses')
+      .then(r=>setCourses(r.data))
+      .catch(()=>{
+        // fallback sample
+        setCourses([{_id:1,title:'B.Tech Computer Science',desc:'AI, ML, Data Science.'},{_id:2,title:'B.Tech Electronics',desc:'Embedded systems & VLSI.'}])
+      })
+  },[])
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Our Programs</h2>
+      <div className="grid md:grid-cols-2 gap-4">
+        {courses.map(c=> (
+          <div key={c._id} className="p-4 bg-white rounded shadow">
+            <h3 className="font-semibold">{c.title}</h3>
+            <p className="mt-2 text-sm text-gray-600">{c.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/About.jsx
+import React from 'react'
+export default function About(){
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">About HiTech</h2>
+      <p className="mt-4">HiTech Educational College focuses on bridging industry and academics with hands-on learning, live projects and entrepreneurship support.</p>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/Contact.jsx
+import React, {useState} from 'react'
+export default function Contact(){
+  const [msg,setMsg]=useState('')
+  const send = async ()=>{
+    alert('Message sent: '+msg)
+    setMsg('')
+  }
+  return (
+    <div className="max-w-xl">
+      <h2 className="text-2xl font-bold">Contact</h2>
+      <textarea value={msg} onChange={e=>setMsg(e.target.value)} className="w-full mt-4 p-3 border rounded" rows={6} placeholder="Your message" />
+      <button onClick={send} className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded">Send</button>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/Login.jsx
+import React, {useState} from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+
+export default function Login(){
+  const [email,setEmail]=useState('')
+  const [password,setPassword]=useState('')
+  const nav = useNavigate()
+  const submit = async ()=>{
+    try{
+      const res = await axios.post('http://localhost:5000/api/auth/login',{email,password})
+      localStorage.setItem('token', res.data.token)
+      nav('/dashboard')
+    }catch(err){
+      alert('Login failed')
+    }
+  }
+  return (
+    <div className="max-w-md">
+      <h2 className="text-2xl font-bold">Login</h2>
+      <input className="w-full mt-3 p-2 border rounded" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
+      <input className="w-full mt-3 p-2 border rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+      <button onClick={submit} className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded">Login</button>
+    </div>
+  )
+}
+
+// File: frontend/src/pages/Dashboard.jsx
+import React, {useEffect, useState} from 'react'
+import axios from 'axios'
+
+export default function Dashboard(){
+  const [profile,setProfile]=useState(null)
+  useEffect(()=>{
+    const token = localStorage.getItem('token')
+    if(!token) return
+    axios.get('http://localhost:5000/api/auth/me',{headers:{Authorization:'Bearer '+token}})
+      .then(r=>setProfile(r.data))
+      .catch(()=>setProfile(null))
+  },[])
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">Dashboard</h2>
+      {profile ? (
+        <div className="mt-4 p-4 bg-white rounded shadow">
+          <p><strong>Name:</strong> {profile.name}</p>
+          <p><strong>Email:</strong> {profile.email}</p>
+        </div>
+      ) : (
+        <p className="mt-4">Please login to view your dashboard.</p>
+      )}
+    </div>
+  )
+}
+
+
